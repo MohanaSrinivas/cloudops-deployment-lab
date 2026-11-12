@@ -9,3 +9,5 @@ dist/
 coverage/
 *.py[cod]
 .DS_Store
+test_applytrack.db
+*.tsbuildinfo
