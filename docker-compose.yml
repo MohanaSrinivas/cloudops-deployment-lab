@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-applytrack}
+      POSTGRES_USER: ${POSTGRES_USER:-applytrack}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-only-change-me}
+    volumes: [db_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-applytrack} -d ${POSTGRES_DB:-applytrack}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  api:
+    build: ./applytrack/backend
+    image: ${API_IMAGE:-applytrack-api}:${IMAGE_TAG:-local}
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-applytrack}:${POSTGRES_PASSWORD:-local-only-change-me}@db:5432/${POSTGRES_DB:-applytrack}
+      JWT_SECRET: ${JWT_SECRET:-local-only-change-me}
+      CORS_ORIGINS: http://localhost:5173
+    ports: ["8000:8000"]
+    depends_on: {db: {condition: service_healthy}}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 20s
+      timeout: 4s
+      retries: 5
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    volumes: ["./applytrack/frontend:/app"]
+    command: sh -c "npm install && npm run dev"
+    environment: {VITE_API_URL: http://localhost:8000}
+    ports: ["5173:5173"]
+    depends_on: [api]
+  prometheus:
+    image: prom/prometheus:v3.4.0
+    volumes: ["./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+    depends_on: [api]
+  grafana:
+    image: grafana/grafana:11.6.1
+    environment: {GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin-change-me}}
+    volumes: ["grafana_data:/var/lib/grafana", "./monitoring/provisioning:/etc/grafana/provisioning:ro"]
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+volumes:
+  db_data:
+  grafana_data:
