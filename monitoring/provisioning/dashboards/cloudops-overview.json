@@ -1,0 +1,1 @@
+{"title":"CloudOps Lab Overview","schemaVersion":39,"version":1,"panels":[{"type":"timeseries","title":"Prometheus process uptime","gridPos":{"h":8,"w":24,"x":0,"y":0},"targets":[{"expr":"process_uptime_seconds","legendFormat":"uptime"}]}]}
