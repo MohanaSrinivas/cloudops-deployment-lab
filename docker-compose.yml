@@ -40,7 +40,7 @@ services:
     depends_on: [api]
   grafana:
     image: grafana/grafana:11.6.1
-    environment: {GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin-change-me}}
+    environment: {GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin-change-me}"}
     volumes: ["grafana_data:/var/lib/grafana", "./monitoring/provisioning:/etc/grafana/provisioning:ro"]
     ports: ["3000:3000"]
     depends_on: [prometheus]
